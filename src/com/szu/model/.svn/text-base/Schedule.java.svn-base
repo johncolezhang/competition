@@ -1,0 +1,105 @@
+package com.szu.model;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import com.szu.util.Classify;
+
+public class Schedule {
+	private int fitting = 0;// 总适应值
+	private int time = 0;// 总时间，除开处罚
+	private Vehicle vehicle = null;
+	private final static int MAX_WEIGHT = 140;
+	private final static int POP_SIZE = 100;
+	private final static int STEP = 15;
+	private final static int STOP_TIME = 620;
+
+	public void run() {
+		int i = 0;
+		int totalDepot = 0, totalO2o = 0, useDepot = 0, useO2o = 0, o2oclass = 0, dui = 0;
+		for (Entry<String, List<Order>> entry : ServiceData.depotMaps
+				.entrySet()) {
+			String key = entry.getKey();
+			List<Order> depotOrders = ServiceData.depotMaps.get(key);
+			totalDepot += depotOrders.size();
+			totalO2o += ServiceData.o2oOrderMaps.get(key).size();
+			if (ServiceData.o2oOrderMaps.get(key).size() > 0)
+				dui++;
+			Map<String, List<Order>> o2oClassMap = Classify.classifyO2oByTime(
+					depotOrders, ServiceData.o2oOrderMaps.get(key));
+			for (List list : o2oClassMap.values()) {
+				o2oclass += list.size();
+			}
+			List<List<Order>> depotLists = Classify.classifyDepot(depotOrders,
+					o2oClassMap);
+			List<ChunkOrder> chunkOrders = Classify.divideDepotbyO2oOrders(
+					depotLists, o2oClassMap);
+			vehicle = null;
+			int minStartTime = getMinStartTime(chunkOrders);
+			while (chunkOrders.size() != 0) {
+				// 超时
+				if (vehicle == null || vehicle.getTime() >= Schedule.STOP_TIME) {
+					if (vehicle != null) {// 完成一次演化
+						List<ResultOrder> list = vehicle.getServicedLists();
+						ServiceData.ResultMaps.put(vehicle.getCourier_id(),
+								list);
+						fitting += vehicle.getFitting();
+						time += list.get(list.size() - 1).Departure;
+					}
+					vehicle = new Vehicle(ServiceData.courierLists.get(i),
+							POP_SIZE);
+					System.out.println(vehicle.getCourier_id());
+					i++;
+				}
+				ChunkOrder chunkOrder = null;
+				// ???/
+				if (vehicle.getTime() >= minStartTime - Schedule.STEP) {
+					for (ChunkOrder chunkOrder2 : chunkOrders) {
+						if ((chunkOrder2.startTime - Schedule.STEP - vehicle
+								.getTime()) > 0) {
+							chunkOrder = chunkOrder2;
+							break;
+						}
+					}
+					chunkOrders.remove(chunkOrder);
+				}
+				if (chunkOrder == null) {
+					chunkOrder = chunkOrders.get(0);
+					chunkOrders.remove(0);
+				}
+				vehicle.addOrder(chunkOrder.depotOrders, chunkOrder.o2oOrders);
+				// vehicle.addO2oOrders(chunkOrder.o2oOrders);
+				useDepot += chunkOrder.depotOrders.size();
+				useO2o += chunkOrder.o2oOrders.size();
+				vehicle.run();
+			}
+			minStartTime = getMinStartTime(chunkOrders);
+			List<ResultOrder> list = vehicle.getServicedLists();
+			ServiceData.ResultMaps.put(vehicle.getCourier_id(), list);
+			fitting += vehicle.getFitting();
+			time += list.get(list.size() - 1).Departure;
+		}
+		System.out.println(totalDepot + " " + totalO2o);
+		System.out.println(useDepot + " " + useO2o + "  " + o2oclass + " "
+				+ dui);
+	}
+
+	private int getMinStartTime(List<ChunkOrder> chunkOrders) {
+		int minStart = Integer.MAX_VALUE;
+		for (ChunkOrder chunkOrder : chunkOrders) {
+			if (chunkOrder.startTime != 0) {
+				minStart = Math.min(minStart, chunkOrder.startTime);
+			}
+		}
+		return minStart;
+	}
+
+	public int getTime() {
+		return time;
+	}
+
+	public int getFitting() {
+		return fitting;
+	}
+}

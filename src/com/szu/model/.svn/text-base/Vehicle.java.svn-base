@@ -1,0 +1,293 @@
+package com.szu.model;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import com.szu.util.Chromosome;
+import com.szu.util.LocalSearch;
+import com.szu.util.Rule;
+
+public class Vehicle {
+	private List<ResultOrder> servicedLists;
+	private List<Route> routes;
+	private int time;
+	private int fitting;// 一辆车的适应值
+	private int weight; // 车载容量，最大为140
+	private final static int DELAY_TIME = 80;// 3 点，不超过50min
+	private final static int MAX_WEIGHT = 140;
+	private final static int FIN_SER = 850;
+	private List<Order> o2oOrders;
+	/**
+	 * 记录当前的仓库
+	 */
+	private List<ResultOrder> depots;
+	String Courier_id;
+	private int popSize;
+
+	public Vehicle(String courier_id, int popSize) {
+		this.servicedLists = new ArrayList<>();
+		this.depots = new ArrayList<>();
+		this.Courier_id = courier_id;
+		this.routes = new ArrayList<>();
+		this.popSize = popSize;
+		this.time = 0;// 起始时间为0
+		this.weight = 0;
+	}
+
+	public void run() {
+		for (int j = 0; j < popSize; j++) {
+			int size = routes.size();
+			Route route, route2;
+			for (int i = 0; i < size / 2; i++) {
+				route = routes.get(i).clone();// 深度拷贝，获取独立实例
+				route2 = routes.get(size - i - 1).clone();
+				// Chromosome.crossOperator(route.getLists(),
+				// route2.getLists());
+				Chromosome.mutateOperator(route.getLists());
+				Chromosome.mutateOperator(route2.getLists());
+				// 计算适应值
+				int fitting = Rule.calFitting(route.getLists(),
+						route.getDepotOrder(), time);
+				route.setFitting(fitting);
+				fitting = Rule.calFitting(route2.getLists(),
+						route.getDepotOrder(), time);
+				route2.setFitting(fitting);
+				routes.add(route);
+				routes.add(route2);
+			}
+			// 进行局部优化
+			for (int i = 0; i < routes.size(); i++) {
+				Route route3 = routes.get(i);
+				LocalSearch.localStaticSearch(route3.getLists(),
+						route3.getDepotOrder());
+				// 计算适应值
+				int fitting = Rule.calFitting(route3.getLists(),
+						route3.getDepotOrder(), time);
+				route3.setFitting(fitting);
+			}
+			selectRoute();
+		}
+		// 增加 o2o 订单
+		List<ResultOrder> curServiceLists = new ArrayList<>();
+		curServiceLists.addAll(depots);
+		curServiceLists.addAll(routes.get(0).getLists());
+		Rule.calFitting(curServiceLists, routes.get(0).getDepotOrder(), time);
+		insertO2OOrder(curServiceLists, this.o2oOrders);
+		// 一次结束后，将其加入到服务队列，由于进行了选择，故，最好的为第一条路
+		servicedLists.addAll(curServiceLists);
+		fitting = Rule.calFitting(servicedLists, routes.get(0).getDepotOrder(),
+				0);// 计算时间
+		// 回到仓库的时间
+		time = routes.get(0).getDepotOrder().Arrival_time;
+		weight = 0;// 车容量清0，一次任务完成
+	}
+
+	private void insertO2OOrder(List<ResultOrder> curServiceLists,
+			List<Order> o2oOrders) {
+		List<Order> orders = new ArrayList<>();
+		int pickupTime = this.time - DELAY_TIME;
+		int deliveryTime = curServiceLists.get(curServiceLists.size() - 1).Departure;
+		ResultOrder insertResultOrder;
+		for (Order order : o2oOrders) {
+			insertResultOrder = createResultOrder(order, true);
+			int index = 1;
+			index = insertO2OOrderIndex(curServiceLists, insertResultOrder,
+					index, true);
+			if (index < 0)
+				continue;
+			curServiceLists.add(index, insertResultOrder);
+			if (!Rule.isWeightLegal(curServiceLists)) {
+				curServiceLists.remove(insertResultOrder);
+				continue;
+			}
+			Rule.calFitting(curServiceLists, depots.get(0), this.time);
+			insertResultOrder = createResultOrder(order, false);
+			index++;// 多了 一个元素，保证在该元素右边，故移动一位
+			index = insertO2OOrderIndex(curServiceLists, insertResultOrder,
+					index, false);
+			curServiceLists.add(index, insertResultOrder);
+			Rule.calFitting(curServiceLists, depots.get(0), this.time);
+			orders.add(order);
+			// 服务时间太长，跳出服务
+			// if (curServiceLists.get(curServiceLists.size() - 1).Departure >
+			// Vehicle.FIN_SER)
+			// break;
+		}
+		// if (orders.size() > 0)
+		// System.out.println("remove:" + orders.size());
+		// 将处理过的 O2O 点移除
+		o2oOrders.removeAll(orders);
+		if (o2oOrders.size() > orders.size()) {
+			Order order = ServiceData.OrderPackageMaps
+					.get(depots.get(0).Order_id);
+			System.out.println(order.src_id + " 还剩  "
+					+ (o2oOrders.size() - orders.size()) + " 没有处理");
+		}
+	}
+
+	/**
+	 * 获取插入点的位置
+	 * 
+	 * @param curServiceLists
+	 * @param insertResultOrder
+	 * @param index
+	 *            插入点的初始位置，为1开,始即 index>=1
+	 * @return 插入点位置
+	 */
+	private int insertO2OOrderIndex(List<ResultOrder> curServiceLists,
+			ResultOrder insertResultOrder, int index, boolean isSrc) {
+		int i;// 主要针对商户点，因为是收件，为正，派件为负
+		int tmp, minTime = Integer.MAX_VALUE;
+		for (i = index; i < curServiceLists.size(); i++) {
+			// 插入后超重了
+			if (Rule.isOverWeight(curServiceLists, insertResultOrder, i)) {
+				continue;
+			}
+			tmp = additionTime(curServiceLists, insertResultOrder, i);
+			if (minTime > tmp) {
+				index = i;
+				minTime = tmp;
+			}
+		}
+		// if (isSrc && minTime > Vehicle.DELAY_TIME) {
+		// // System.out.println("花时间太多，距离过远:" + minTime);
+		// return -1;
+		// }
+		return index;
+	}
+
+	private int additionTime(List<ResultOrder> list, ResultOrder insertOrder,
+			int index) {
+		list.add(index, insertOrder);
+		ResultOrder depotOrder = list.get(0).clone();
+		int fitting = Rule.calFitting(list, depotOrder, this.time);
+		list.remove(index);
+		return fitting;
+	}
+
+	/**
+	 * 会修改类的属性，故要深度克隆进来
+	 * 
+	 * @param prioOrder
+	 * @param middOrder
+	 * @param tailOrder
+	 * @return
+	 */
+	private int additionTime(ResultOrder prioOrder, ResultOrder middOrder,
+			ResultOrder tailOrder) {
+		int addTime = 0;
+		Node pioNode = ServiceData.localPacageMaps.get(prioOrder.Addr);
+		Node middNode = ServiceData.localPacageMaps.get(middOrder.Addr);
+		Node tailNode = ServiceData.localPacageMaps.get(tailOrder.Addr);
+		int distance1 = Rule.distanceTime(pioNode, middNode);
+		int distance2 = Rule.distanceTime(middNode, tailNode);
+		// 局部计算消耗时间
+		middOrder.Arrival_time = prioOrder.Departure + distance1;
+		addTime += Rule.punishTime(middOrder);
+		tailOrder.Arrival_time = middOrder.Departure + distance2;
+		addTime += Rule.punishTime(tailOrder);
+		// 加上总时间
+		addTime += (tailOrder.Departure - prioOrder.Departure);
+		return addTime;
+	}
+
+	private ResultOrder createResultOrder(Order order, boolean isSrc) {
+		ResultOrder resultOrder = new ResultOrder();
+		resultOrder.Courier_id = Courier_id;
+		if (isSrc) {
+			resultOrder.Addr = order.src_id;
+			resultOrder.Amount = order.num;
+			// System.out.println("src:" + order.src_id);
+		} else {
+			resultOrder.Addr = order.dest_id;
+			resultOrder.Amount = -order.num;
+			// System.out.println("dest:" + order.dest_id);
+		}
+		resultOrder.Order_id = order.order_id;
+		return resultOrder;
+	}
+
+	public int getTime() {
+		return time;
+	}
+
+	public int getFitting() {
+		return fitting;
+	}
+
+	public List<ResultOrder> getServicedLists() {
+		return servicedLists;
+	}
+
+	public String getCourier_id() {
+		return Courier_id;
+	}
+
+	public int getWeight() {
+		return weight;
+	}
+
+	/**
+	 * 选择优秀的路径
+	 */
+	protected void selectRoute() {
+		Collections.sort(routes, new Comparator<Route>() {
+
+			@Override
+			public int compare(Route o1, Route o2) {
+				int d1 = o1.getFitting();
+				int d2 = o2.getFitting();
+				if (d1 < d2)
+					return -1;
+				if (d1 > d2)
+					return 1;
+				return 0;// 降序排序
+			}
+
+		});
+		routes = routes.subList(0, popSize);// 精英选择，选择最佳的路径
+	}
+
+	public void addO2oOrders(List<Order> o2oOrders) {
+		this.o2oOrders = new ArrayList<>();
+		this.o2oOrders.addAll(o2oOrders);
+	}
+
+	/**
+	 * 添加仓库货物
+	 * 
+	 * @param lists
+	 */
+	public void addOrder(List<Order> lists, List<Order> o2oOrders) {
+		depots.clear();
+		this.weight = 0;
+		for (Order order : lists) {
+			ResultOrder srcOrder = new ResultOrder();
+			srcOrder.Courier_id = Courier_id;
+			srcOrder.Addr = order.src_id;
+			srcOrder.Amount = order.num;
+			srcOrder.Order_id = order.order_id;
+			this.depots.add(srcOrder);
+			this.weight += order.num;
+		}
+		this.o2oOrders = o2oOrders;
+		initRoute(lists, o2oOrders);
+	}
+
+	private void initRoute(List<Order> lists, List<Order> o2oList) {
+		routes.clear();
+		// 初始化路径
+		for (int i = 0; i < popSize; i++) {
+			Route route = new Route(Courier_id);
+			route.addResultOrders(lists);
+			// route.addO2oResultOrder(o2oList);
+			int fitting = Rule.calFitting(route.getLists(),
+					route.getDepotOrder(), time);
+			route.setFitting(fitting);
+			routes.add(route);
+		}
+	}
+
+}

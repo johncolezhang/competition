@@ -1,0 +1,207 @@
+package com.szu.util;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.szu.model.Node;
+import com.szu.model.ResultOrder;
+import com.szu.model.ServiceData;
+import com.szu.model.SortNode;
+
+public class LocalSearch {
+	private static int M_MIN_NODE = 20;// 每个点挂20个其他最近邻点
+
+	/**
+	 * 创建排序列表，key 表示一个订单的名称，List 表示改点到其他点的距离和信息
+	 * 
+	 * @param list
+	 *            要创建排序库的列表
+	 * @return 返回创建好的 map
+	 */
+	public static Map<String, List<SortNode>> createSortLib() {
+		Map<String, List<SortNode>> libMap = new HashMap<>();
+		Collection<Node> nodes = ServiceData.localPacageMaps.values();
+		for (Node node : nodes) {
+			List<SortNode> sortNodeList = new ArrayList<>();
+			for (Node node2 : nodes) {
+				// 同一个对象，故大胆用 equals
+				if (node.equals(node2))
+					continue;
+				SortNode sortNode = new SortNode();
+				sortNode.dist = Rule.distanceTime(node, node2);
+				sortNode.staticOderNameList.addAll(node2.staticOderNameList);
+				sortNode.o2oDeliveryOrderNameList
+						.addAll(node2.o2oDeliveryOrderNameList);
+				sortNode.o2oPickupOrderNameList
+						.addAll(node2.o2oPickupOrderNameList);
+				sortNodeList.add(sortNode);
+			}
+			SortNode[] sortNodes = MaxHeap.topK(sortNodeList, M_MIN_NODE);
+			sortNodeList.clear();
+			for (SortNode sortNode : sortNodes) {
+				sortNodeList.add(sortNode);
+			}
+			Collections.sort(sortNodeList);
+			libMap.put(node.name, sortNodeList);
+		}
+		return libMap;
+
+	}
+
+	/**
+	 * 只考虑静态点的优化
+	 * 
+	 * @param resultOrders
+	 * @param depotOrder
+	 * @param curTime
+	 */
+	public static void localStaticSearch(List<ResultOrder> resultOrders,
+			ResultOrder depotOrder) {
+		int index = bestRemoveIndex(resultOrders, depotOrder);
+		ResultOrder order = resultOrders.remove(index);
+		index = bestInsertIndex(resultOrders, depotOrder, order);
+		resultOrders.add(index, order);
+	}
+
+	private static int bestRemoveIndex(List<ResultOrder> resultOrders,
+			ResultOrder depotOrder) {
+		int index = 0, size = resultOrders.size();
+		int maxFitting = Integer.MIN_VALUE;
+		ResultOrder preOrder, curOrder, nextOrder;
+		preOrder = depotOrder;
+		for (int i = 0; i < size - 1; i++) {
+			curOrder = resultOrders.get(i);
+			nextOrder = resultOrders.get(i + 1);
+			Node node = ServiceData.localPacageMaps.get(preOrder.Addr);
+			Node node2 = ServiceData.localPacageMaps.get(nextOrder.Addr);
+			int newDist = Rule.distanceTime(node, node2);
+			int oldDist = (curOrder.Arrival_time - preOrder.Departure)
+					+ (nextOrder.Arrival_time - curOrder.Departure);
+			int tmp = oldDist - newDist;
+			if (maxFitting < tmp) {
+				maxFitting = tmp;
+				index = i;
+			}
+			preOrder = curOrder;
+		}
+		curOrder = resultOrders.get(size - 1);
+		nextOrder = depotOrder;
+		Node node = ServiceData.localPacageMaps.get(preOrder.Addr);
+		Node node2 = ServiceData.localPacageMaps.get(nextOrder.Addr);
+		int newDist = Rule.distanceTime(node, node2);
+		int oldDist = (curOrder.Arrival_time - preOrder.Departure)
+				+ (nextOrder.Arrival_time - curOrder.Departure);
+		int tmp = oldDist - newDist;
+		if (maxFitting < tmp) {
+			maxFitting = tmp;
+			index = size - 1;
+		}
+		return index;
+	}
+
+	private static int bestInsertIndex(List<ResultOrder> resultOrders,
+			ResultOrder depotOrder, ResultOrder insertOrder) {
+		int index = 0, size = resultOrders.size();
+		int minFitting = Integer.MAX_VALUE;
+		ResultOrder preOrder, curOrder, nextOrder;
+		curOrder = insertOrder;
+		preOrder = depotOrder;
+		Node node2 = ServiceData.localPacageMaps.get(curOrder.Addr);
+		for (int i = 0; i < size; i++) {
+			nextOrder = resultOrders.get(i);
+			Node node = ServiceData.localPacageMaps.get(preOrder.Addr);
+			Node node3 = ServiceData.localPacageMaps.get(nextOrder.Addr);
+			int newDist1 = Rule.distanceTime(node, node2);
+			int newDist2 = Rule.distanceTime(node3, node2);
+			int tmp = newDist1 + newDist2;
+			if (minFitting > tmp) {
+				minFitting = tmp;
+				index = i;
+			}
+			preOrder = nextOrder;
+		}
+		nextOrder = depotOrder;
+		Node node = ServiceData.localPacageMaps.get(preOrder.Addr);
+		Node node3 = ServiceData.localPacageMaps.get(nextOrder.Addr);
+		int newDist = Rule.distanceTime(node, node2);
+		int newDist1 = Rule.distanceTime(node3, node2);
+		int tmp = newDist1 + newDist;
+		if (minFitting < tmp) {
+			minFitting = tmp;
+			index = size;
+		}
+		return index;
+	}
+
+	/**
+	 * 考虑动态点的局部优化
+	 * 
+	 * @param resultOrders
+	 * @param depotOrder
+	 * @param curTime
+	 */
+	public static void localSearch(List<ResultOrder> resultOrders,
+			ResultOrder depotOrder, int curTime) {
+		int index = bestRemoveIndex(resultOrders, depotOrder, curTime);
+		ResultOrder order = resultOrders.remove(index);
+		index = bestInsertIndex(resultOrders, depotOrder, order, curTime);
+		resultOrders.add(index, order);
+		Rule.rectify(resultOrders);// 进行修复
+	}
+
+	private static int bestRemoveIndex(List<ResultOrder> resultOrders,
+			ResultOrder depotOrder, int curTime) {
+		int index = 0, size = resultOrders.size();
+		int maxFitting = Integer.MIN_VALUE;
+		for (int i = 0; i < size; i++) {
+			ResultOrder order = resultOrders.remove(i);
+			int fitting = Rule.calFitting(resultOrders, depotOrder, curTime);
+			if (maxFitting > fitting) {
+				maxFitting = fitting;
+				index = i;
+			}
+			resultOrders.add(i, order);
+		}
+		return index;
+	}
+
+	private static int bestInsertIndex(List<ResultOrder> resultOrders,
+			ResultOrder depotOrder, ResultOrder insertOrder, int curTime) {
+		int index = 0, size = resultOrders.size();
+		int minFitting = Integer.MAX_VALUE;
+		// 可以插入最后一个空位，即共有 size+1 个空位
+		for (int i = 0; i <= size; i++) {
+			resultOrders.add(i, insertOrder);
+			int fitting = Rule.calFitting(resultOrders, depotOrder, curTime);
+			if (fitting < minFitting) {
+				minFitting = fitting;
+				index = i;
+			}
+			resultOrders.remove(i);
+		}
+		return index;
+	}
+
+	// 会修改传进去的内容
+	private static int additionTime(ResultOrder prioOrder,
+			ResultOrder middOrder, ResultOrder tailOrder) {
+		int addTime = 0;
+		Node pioNode = ServiceData.localPacageMaps.get(prioOrder.Addr);
+		Node middNode = ServiceData.localPacageMaps.get(middOrder.Addr);
+		Node tailNode = ServiceData.localPacageMaps.get(tailOrder.Addr);
+		int distance1 = Rule.distanceTime(pioNode, middNode);
+		int distance2 = Rule.distanceTime(middNode, tailNode);
+		// 局部计算消耗时间
+		middOrder.Arrival_time = prioOrder.Departure + distance1;
+		addTime += Rule.punishTime(middOrder);
+		tailOrder.Arrival_time = middOrder.Departure + distance2;
+		addTime += Rule.punishTime(tailOrder);
+		// 加上总时间
+		addTime += (tailOrder.Departure - prioOrder.Departure);
+		return addTime;
+	}
+}

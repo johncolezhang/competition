@@ -1,0 +1,10 @@
+package com.szu.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ChunkOrder {
+	public List<Order> depotOrders = new ArrayList<>();
+	public List<Order> o2oOrders = new ArrayList<>();
+	public int startTime = 0;
+}

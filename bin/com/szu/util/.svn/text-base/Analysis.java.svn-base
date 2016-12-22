@@ -1,0 +1,121 @@
+package com.szu.util;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import com.szu.model.Node;
+import com.szu.model.Order;
+import com.szu.model.ServiceData;
+
+public class Analysis {
+	/**
+	 * 
+	 * minPickup:210 maxPickup:629 minDelivery:300 maxDelivery:719
+	 */
+
+	public static void main(String[] args) {
+		ServiceData.loadData();
+		Map<String, List<Order>> o2oOrderMaps = new HashMap<>();
+		o2oOrderClassify(o2oOrderMaps);
+		List<Order> depotOrders = ServiceData.depotMaps.get("A116");
+		List<Order> o2oOrders = o2oOrderMaps.get("A116");
+		Map<String, List<Order>> depotWitho2oMap = new HashMap<>();
+		for (Order depotOrder : depotOrders) {
+			List<Order> list = new ArrayList<>();
+			depotWitho2oMap.put(depotOrder.dest_id, list);
+		}
+		System.out.println(o2oOrders.size());
+		int mind = Integer.MAX_VALUE, maxd = Integer.MIN_VALUE;
+		for (Order o2oOrder : o2oOrders) {
+			Order minOrder = null;
+			int minDistance = Integer.MAX_VALUE;
+			Node node = ServiceData.localPacageMaps.get(o2oOrder.src_id);
+			for (Order depotOrder : depotOrders) {
+				Node node2 = ServiceData.localPacageMaps
+						.get(depotOrder.dest_id);
+				int tmp = Rule.distanceTime(node, node2);
+				if (tmp < minDistance) {
+					minDistance = tmp;
+					minOrder = depotOrder;
+				}
+				maxd = Math.max(maxd, tmp);
+			}
+			mind = Math.min(mind, minDistance);
+			depotWitho2oMap.get(minOrder.dest_id).add(o2oOrder);
+		}
+		int maxdd = Integer.MIN_VALUE;
+		for (Order o2oOrder : depotOrders) {
+			int minDistance = Integer.MAX_VALUE;
+			Node node = ServiceData.localPacageMaps.get(o2oOrder.dest_id);
+			for (Order depotOrder : depotOrders) {
+				Node node2 = ServiceData.localPacageMaps
+						.get(depotOrder.dest_id);
+				int tmp = Rule.distanceTime(node, node2);
+				maxdd = Math.max(maxdd, tmp);
+			}
+		}
+		System.out.printf("%5s%5s\n", maxd, maxdd);
+		int i = 1;
+		for (Entry<String, List<Order>> entry : depotWitho2oMap.entrySet()) {
+			System.out.printf("%3s%7s%5s\n", i, entry.getKey(), entry
+					.getValue().size());
+			i++;
+		}
+		// int total = 0, o2ototal = 0, i = 1;
+		// for (List list : ServiceData.depotMaps.values()) {
+		// for (Entry<String, List<Order>> entry : ServiceData.depotMaps
+		// .entrySet()) {
+		// List list = o2oOrderMaps.get(entry.getKey());
+		// System.out.printf("%3s%5s%5s%5s\n", i, entry.getKey(), entry
+		// .getValue().size(), list.size());
+		// total += entry.getValue().size();
+		// o2ototal += list.size();
+		// i++;
+		// }
+		// Collections.sort(integers);
+		// System.out.printf("%6s%6s", total, o2ototal);
+	}
+
+	public static void o2oOrderClassify(Map<String, List<Order>> o2oOrderMaps) {
+		// 初始化 o2o 订单
+		for (String string : ServiceData.depotMaps.keySet()) {
+			List<Order> list = new ArrayList<>();
+			o2oOrderMaps.put(string, list);
+		}
+		// 将 o2o 订单分配到相关的站点里
+		for (Order order : ServiceData.o2oOrders) {
+			Node node = ServiceData.localPacageMaps.get(order.src_id);
+			int distance = Integer.MAX_VALUE;
+			String minDepot = null;
+			for (String string : ServiceData.depotMaps.keySet()) {
+				Node node2 = ServiceData.localPacageMaps.get(string);
+				int tmp = Rule.distanceTime(node, node2);
+				if (distance > tmp) {
+					distance = tmp;
+					minDepot = string;
+				}
+			}
+			o2oOrderMaps.get(minDepot).add(order);
+		}
+	}
+
+	public static void o2oTimeRange() {
+		int minPickup = Integer.MAX_VALUE;
+		int maxPickup = Integer.MIN_VALUE;
+		int minDelivery = Integer.MAX_VALUE;
+		int maxDelivery = Integer.MIN_VALUE;
+		for (Order order : ServiceData.o2oOrders) {
+			minPickup = Math.min(minPickup, order.pickup_time);
+			minDelivery = Math.min(minDelivery, order.delivery_time);
+			maxPickup = Math.max(maxPickup, order.pickup_time);
+			maxDelivery = Math.max(maxDelivery, order.delivery_time);
+		}
+		System.out.println("minPickup:" + minPickup);
+		System.out.println("maxPickup:" + maxPickup);
+		System.out.println("minDelivery:" + minDelivery);
+		System.out.println("maxDelivery:" + maxDelivery);
+	}
+}

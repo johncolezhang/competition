@@ -1,0 +1,44 @@
+package com.szu.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Node {
+	/**
+	 * 网点，主要提供包裹服务
+	 */
+	public static int Site = 1;
+	/**
+	 * 目的点，收取包裹
+	 */
+	public static int Spot = 2;
+	/**
+	 * O2O商户，提供限时服务
+	 */
+	public static int Shop = 3;
+	/**
+	 * 对应服务点名
+	 */
+	public String name;
+	public double Lng;
+	public double Lat;
+	public int type;
+	/**
+	 * 记录 O2O 订单的名称
+	 */
+	public List<String> o2oPickupOrderNameList = new ArrayList<>();
+	/**
+	 * 记录 O2O 订单的名称
+	 */
+	public List<String> o2oDeliveryOrderNameList = new ArrayList<>();
+	/**
+	 * 记录电商订单名称
+	 */
+	public List<String> staticOderNameList = new ArrayList<>();
+
+	@Override
+	public String toString() {
+		return "Node [name=" + name + ", Lng=" + Lng + ", Lat=" + Lat + "]";
+	}
+
+}

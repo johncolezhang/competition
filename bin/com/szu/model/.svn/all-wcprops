@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/Competition/!svn/ver/11/src/com/szu/model
+END
+SortNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/Competition/!svn/ver/6/src/com/szu/model/SortNode.java
+END
+ServiceData.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/Competition/!svn/ver/6/src/com/szu/model/ServiceData.java
+END
+CopyOfKMeans.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/Competition/!svn/ver/2/src/com/szu/model/CopyOfKMeans.java
+END
+Order.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/Competition/!svn/ver/1/src/com/szu/model/Order.java
+END
+DynamicVehicle.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/Competition/!svn/ver/11/src/com/szu/model/DynamicVehicle.java
+END
+Vehicle.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/Competition/!svn/ver/4/src/com/szu/model/Vehicle.java
+END
+DepotOrder.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/Competition/!svn/ver/1/src/com/szu/model/DepotOrder.java
+END
+Route.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/Competition/!svn/ver/3/src/com/szu/model/Route.java
+END
+Schedule.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/Competition/!svn/ver/6/src/com/szu/model/Schedule.java
+END
+KMeans.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/Competition/!svn/ver/2/src/com/szu/model/KMeans.java
+END
+Node.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/Competition/!svn/ver/6/src/com/szu/model/Node.java
+END
+ResultOrder.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/Competition/!svn/ver/2/src/com/szu/model/ResultOrder.java
+END
+ChunkOrder.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/Competition/!svn/ver/2/src/com/szu/model/ChunkOrder.java
+END

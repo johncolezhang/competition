@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/Competition/!svn/ver/11/src/com/szu/util
+END
+ConvertTime.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/Competition/!svn/ver/1/src/com/szu/util/ConvertTime.java
+END
+MaxHeap.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/Competition/!svn/ver/6/src/com/szu/util/MaxHeap.java
+END
+CopyOfBranchAndBoundForTSP.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/Competition/!svn/ver/11/src/com/szu/util/CopyOfBranchAndBoundForTSP.java
+END
+Analysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/Competition/!svn/ver/1/src/com/szu/util/Analysis.java
+END
+Rule.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/Competition/!svn/ver/11/src/com/szu/util/Rule.java
+END
+Chromosome.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/Competition/!svn/ver/1/src/com/szu/util/Chromosome.java
+END
+CSVFileUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/Competition/!svn/ver/10/src/com/szu/util/CSVFileUtil.java
+END
+Classify.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/Competition/!svn/ver/7/src/com/szu/util/Classify.java
+END
+LocalSearch.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/Competition/!svn/ver/9/src/com/szu/util/LocalSearch.java
+END
+BranchAndBoundForTSP.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/Competition/!svn/ver/11/src/com/szu/util/BranchAndBoundForTSP.java
+END
