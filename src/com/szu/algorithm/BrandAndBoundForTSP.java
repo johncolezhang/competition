@@ -1,5 +1,7 @@
 package com.szu.algorithm;
-
+/**
+ * 静态结点生成tsp排序的方法
+ */
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -36,10 +38,11 @@ public class BrandAndBoundForTSP {
 				dist[i][j] = distance.dist(list.get(i - 1), list.get(j - 1));//两节点的距离
 			}
 		}
-	}
+	}//求点到点之间的距离
 
 	/**
 	 * 改city为预先准备好要走的路径
+	 * 获取lb的方法，参考算法书第十章
 	 * 
 	 * @param city
 	 * @return
@@ -106,7 +109,7 @@ public class BrandAndBoundForTSP {
 						if (o1 < o2)
 							return 1;
 						return 0;
-					}//升序排序
+					}//降序排序
 				});
 
 		maxHeap.add(dist[cur][1]);
@@ -123,6 +126,10 @@ public class BrandAndBoundForTSP {
 		return lb;
 	}
 
+	/**
+	 * 获取最佳的静态结点tsp排序
+	 * @return
+	 */
 	public City getBest() {
 		City startCity = new City();
 		startCity.route = new int[MAX_NUM];
@@ -142,25 +149,25 @@ public class BrandAndBoundForTSP {
 		queue.add(startCity);
 		while (!queue.isEmpty()) {// 没有空
 			City tempCity = queue.poll();// 将当前的队列放出来
-			if (tempCity.pos == n - 1) {// 最后一个节点
+			if (tempCity.pos == n - 1) {// 如果到了最后一个节点
 				for (int i = 1; i <= n; i++) {
 					if (!tempCity.visited[i]) {// 将最后一个节点加到访问队列里
 						tempCity.visited[i] = true;
 						tempCity.pos++;// 指向下一个
 						tempCity.route[tempCity.pos] = i;
-						tempCity.lb = getLb(tempCity);
-						break;
+						tempCity.lb = getLb(tempCity);//计算当前lb
+						break;//计算最后一点，算完跳出循环
 					}
 				}
 				if (bestCity == null || bestCity.lb > tempCity.lb)
 					bestCity = tempCity;
 			} else {
-				double minLb = Double.MAX_VALUE;
+				double minLb = Double.MAX_VALUE;//找最短开始点的lb
 				List<City> list = new LinkedList<>();
 				for (int i = 1; i <= n; i++) {
 					if (!tempCity.visited[i]) {// 没有访问过，要创建相应对象
 						City city = new City();
-						city.pos = tempCity.pos + 1;
+						city.pos = tempCity.pos + 1;//位置加1
 						city.route = Arrays.copyOf(tempCity.route, MAX_NUM);
 						city.visited = Arrays.copyOf(tempCity.visited, MAX_NUM);
 						city.visited[i] = true;
@@ -172,9 +179,9 @@ public class BrandAndBoundForTSP {
 						}
 					}
 				}
-				for (City city : list) {
+				for (City city : list) {//便历加到list中的起始点
 					if (city.lb == minLb) {
-						queue.add(city);// 添加到队列里
+						queue.add(city);// 最短的添加到队列里
 					}
 				}
 			}

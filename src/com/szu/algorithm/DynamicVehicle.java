@@ -3,6 +3,7 @@ package com.szu.algorithm;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.szu.model.Node;
@@ -19,6 +20,12 @@ public class DynamicVehicle {
 	private static int MAX_WEIGHT = 140;
 	private static int MERGE_TIME_RANGE = 60;
 
+	/**
+	 * 合并静态及o2o订单
+	 * @param depotLists
+	 * @param o2oLists
+	 * @return
+	 */
 	public List<List<ResultOrder>> mergeResultOrders(
 			List<List<ResultOrder>> depotLists, List<List<ResultOrder>> o2oLists) {
 		List<List<ResultOrder>> results = new ArrayList<>();
@@ -31,17 +38,12 @@ public class DynamicVehicle {
 		while (depotLists.size() > 0 || o2oLists.size() > 0) {
 			List<ResultOrder> resultOrders = new ArrayList<>();
 			int startTime = 0;
-			// if (o2oLists.size() > 0) {
-			// resultOrders.addAll(o2oLists.get(0));
-			// Rule.calFitting(resultOrders, depOrder, 0);
-			// o2oLists.remove(0);
-			// } else {
-			if (depotLists.size() > 0) {
-				resultOrders.addAll(depotLists.get(0));
+			if (depotLists.size() > 0) { //先加静态，在加动态
+				resultOrders.addAll(depotLists.get(0));//静态的一段
 				depotLists.remove(0);
 				Rule.calFitting(resultOrders, depOrder, startTime);
 			} else {
-				resultOrders.addAll(o2oLists.get(0));
+				resultOrders.addAll(o2oLists.get(0));//o2o的一段
 				startTime = resultOrders.get(0).Arrival_time;
 				o2oLists.remove(0);
 				Rule.calFitting(resultOrders, depOrder, startTime);
@@ -49,13 +51,13 @@ public class DynamicVehicle {
 			while (true) {
 				List<ResultOrder> list;
 				// 优先合并o2o 的队列
-				int index = mergeO2oLists(resultOrders, o2oLists);
+				int index = mergeO2oLists(resultOrders, o2oLists);//距离最小的下一段o2o
 				if (index != -1) {
 					list = o2oLists.remove(index);
-					resultOrders.addAll(list);
+					resultOrders.addAll(list);//加一段o2o
 					Rule.calFitting(resultOrders, depOrder, startTime);
 				} else {
-					index = mergeDepotLists(resultOrders, depotLists);
+					index = mergeDepotLists(resultOrders, depotLists);//下一段不超时的静态
 					if (index != -1) {
 						list = depotLists.remove(index);
 						resultOrders.addAll(list);
@@ -63,39 +65,42 @@ public class DynamicVehicle {
 					} else
 						break;
 				}
-				// int index = mergeDepotLists(resultOrders, depOrder,
-				// depotLists);
-				// if (index != -1) {
-				// list = depotLists.remove(index);
-				// resultOrders.addAll(list);
-				// } else {
-				// break;
-				// }
 			}
 			results.add(resultOrders);
 		}
 		return results;
 	}
 
+	/**
+	 * 
+	 * @param resultOrders
+	 * @param depotLists
+	 * @return 返回一段不超时的静态段index
+	 */
 	private int mergeDepotLists(List<ResultOrder> resultOrders,
 			List<List<ResultOrder>> depotLists) {
 		ResultOrder beginOrder, tailOrder = resultOrders.get(resultOrders
 				.size() - 1);
 		Node node, node2 = ServiceData.localPacageMaps.get(tailOrder.Addr);
-		int endTime = tailOrder.Departure;
+		int endTime = tailOrder.Departure;//上一段的结束时间
 		for (int i = 0; i < depotLists.size(); i++) {
 			List<ResultOrder> list = depotLists.get(i);
 			beginOrder = list.get(0);
 			tailOrder = list.get(list.size() - 1);
-			node = ServiceData.localPacageMaps.get(beginOrder.Addr);
+			node = ServiceData.localPacageMaps.get(beginOrder.Addr);//该段开始点
 			int time = endTime + Rule.distanceTime(node, node2)
-					+ tailOrder.Departure;
+					+ tailOrder.Departure;//上一段结束点到该段开始点的距离加上一段结束时间该段出发时间
 			if (time <= 720)
 				return i;
 		}
 		return -1;
 	}
-
+/**
+ * 
+ * @param resultOrders 包括一段静态和一段动态订单
+ * @param o2oLists 所有的动态
+ * @return 返回下一动态段的index（时间间隔最小）
+ */
 	private int mergeO2oLists(List<ResultOrder> resultOrders,
 			List<List<ResultOrder>> o2oLists) {
 		ResultOrder tailOrder = resultOrders.get(resultOrders.size() - 1);
@@ -107,9 +112,9 @@ public class DynamicVehicle {
 			List<ResultOrder> list = o2oLists.get(i);
 			beginOrder = list.get(0);
 			node = ServiceData.localPacageMaps.get(beginOrder.Addr);
-			int time = Rule.distanceTime(node, node2);
-			time += tailOrder.Departure;// 距离加上最后处理时间
-			int tmp = beginOrder.Arrival_time - time;
+			int time = Rule.distanceTime(node, node2);//各点到最后一个订单的距离（返回出发点的距离）
+			time += tailOrder.Departure;// 距离加上最后点出发时间
+			int tmp = beginOrder.Arrival_time - time;//时间间隔
 			if (tmp >= 0 && minTime > tmp) {
 				minTime = tmp;
 				index = i;
@@ -121,7 +126,7 @@ public class DynamicVehicle {
 	}
 
 	/**
-	 * 将 o2o 点合并成从0开始的点
+	 * 合并o2o与静态，用到遗传算法，每完成一段都要回归仓库
 	 * 
 	 * @param o2oLists
 	 * @param depotOrders
@@ -134,35 +139,25 @@ public class DynamicVehicle {
 		ResultOrder depotOrder = createResultOrder(depotOrders.get(0), true);
 		Node node = ServiceData.localPacageMaps.get(depotOrder.Addr);//根据商家订单的地址得到该点
 		while (o2oLists.size() > 0 && depotOrders.size() > 0) {
-			resultOrders = o2oLists.remove(0);//取o2o订单
-			ResultOrder beginO2oOrder = resultOrders.get(0);//获得o2o订单中的开始的第一单
+			resultOrders = o2oLists.remove(0);//先取o2o一段
+			ResultOrder beginO2oOrder = resultOrders.get(0);//获得o2o段中的开始的第一单
 			System.out.println("o2oOrderSize:" + o2oLists.size()
 					+ "  beginTime:" + beginO2oOrder.Arrival_time);
-			addO2oOrders(depotOrders, resultOrders, beginO2oOrder, 0);
-			for (int i = 0; i < o2oLists.size(); i++) {
+			addO2oOrders(depotOrders, resultOrders, beginO2oOrder, 0);//添加静态到resultorders
+			for (int i = 0; i < o2oLists.size(); i++) {//合并其他o2o段
 				ResultOrder endOrder = resultOrders
 						.get(resultOrders.size() - 1);
-				Node node2 = ServiceData.localPacageMaps.get(endOrder.Addr);
-				int startTime = endOrder.Departure;
-				startTime += Rule.distanceTime(node, node2);
-				List<ResultOrder> o2oList = o2oLists.get(i);
+				Node node2 = ServiceData.localPacageMaps.get(endOrder.Addr);//最后一点
+				int startTime = endOrder.Departure;//出发时间
+				startTime += Rule.distanceTime(node, node2);//回归仓库第一点的时间
+				List<ResultOrder> o2oList = o2oLists.get(i);//获取一段
 				beginO2oOrder = o2oList.get(0);
 				if (startTime > beginO2oOrder.Arrival_time) {// 超时了
 					continue;
 				}
-				// else if (startTime + O2O_DEPOT_TIME <
-				// beginO2oOrder.Arrival_time) {// 进行合并
-				// o2oLists.remove(i);
-				// i--;
-				// addO2oOrders(depotOrders, o2oList, beginO2oOrder, startTime);
-				// resultOrders.addAll(o2oList);// 合并
-				// Rule.calFitting(resultOrders, depotOrder, 0);// 从0开始算起
-				// }
 				else {// 直接合并，减少数量
 					o2oLists.remove(i);
 					i--;
-					// addO2oOrders(depotOrders, o2oList, beginO2oOrder,
-					// startTime);
 					resultOrders.addAll(o2oList);// 合并
 					Rule.calFitting(resultOrders, depotOrder, 0);// 从0开始算起
 				}
@@ -172,54 +167,51 @@ public class DynamicVehicle {
 		results.addAll(o2oLists);
 		return results;
 	}
-
+	
 	/**
 	 * 
-	 * kamyang 2016年8月5日
-	 * 
-	 * @param depotOrders
-	 * @param o2oOrders
-	 * @param beginO2oOrder
-	 *            o2oOrder 第一个元素
-	 * @param startTime
+	 * @param depotOrders 静态订单
+	 * @param o2oOrders o2o的一段
+	 * @param beginO2oOrder o2oOrders 第一个元素
+	 * @param startTime 开始时间
 	 */
 	private void addO2oOrders(List<Order> depotOrders,
 			List<ResultOrder> o2oOrders, ResultOrder beginO2oOrder,
 			final int startTime) {
 		List<Order> orders = arrayRouteInTime(depotOrders, beginO2oOrder,
 				startTime);//获得一个最近的o2o订单不超过140
-		List<ResultOrder> prioOrders = evaluate(orders);
+		List<ResultOrder> prioOrders = evaluate(orders);//进行遗传算法，获取完成遗传后的调度
 		ResultOrder endDepotOrder, depotOrder;
 		// 一不够，还要继续添加，二、在范围内，可以合并，三，超了，要移除
-		endDepotOrder = prioOrders.get(prioOrders.size() - 1);
-		int time = endDepotOrder.Departure + startTime;// 该序列从0开始，故要加上起始时间
+		endDepotOrder = prioOrders.get(prioOrders.size() - 1);//获取最后一个调度
+		int time = endDepotOrder.Departure + startTime;// 上一单到达时间(最后一单到达时间加该段起始时间)
 		Node node = ServiceData.localPacageMaps.get(endDepotOrder.Addr);
 		Node node2 = ServiceData.localPacageMaps.get(beginO2oOrder.Addr);
-		time += Rule.distanceTime(node, node2);// 加上距离
-		if (time > beginO2oOrder.Arrival_time) {
+		time += Rule.distanceTime(node, node2);// 加上间距
+		if (time > beginO2oOrder.Arrival_time) {//超时
 			while (time > beginO2oOrder.Arrival_time) {// 将大于部分移除
 				if (prioOrders.size() == 2)
 					break;// 如果只有两个则加进来（全部都不符合）
 				ResultOrder resultOrder = prioOrders
-						.remove(prioOrders.size() - 1);
+						.remove(prioOrders.size() - 1);//移除最后一个(为结束调度)
 				for (ResultOrder order : prioOrders) {
 					if (resultOrder.Order_id.equals(order.Order_id)) {
 						resultOrder = order;
 						break;
-					}
+					}//找到该调度（为开始调度）
 				}
-				prioOrders.remove(resultOrder);
+				prioOrders.remove(resultOrder);//相应的移除
 				resultOrder = prioOrders.get(prioOrders.size() - 1);
 				time = resultOrder.Departure + startTime;
 				node = ServiceData.localPacageMaps.get(resultOrder.Addr);
-				time += Rule.distanceTime(node, node2);
+				time += Rule.distanceTime(node, node2);//重新计算时间
 			}
-			o2oOrders.addAll(0, prioOrders);
+			o2oOrders.addAll(0, prioOrders);//将静态加到o2o中
 			depotOrder = o2oOrders.get(0).clone();
-			Rule.calFitting(o2oOrders, depotOrder, startTime);
+			Rule.calFitting(o2oOrders, depotOrder, startTime);//计算时间
 			removeDepotOrders(depotOrders, prioOrders);
-		} else if (time + O2O_DEPOT_TIME < beginO2oOrder.Arrival_time) {// 还差很多，要继续
-			int disparity = beginO2oOrder.Arrival_time - time;
+		} else if (time + O2O_DEPOT_TIME < beginO2oOrder.Arrival_time) {// 差90分钟，还差很多，要继续
+			int disparity = beginO2oOrder.Arrival_time - time;//时间间隔
 			beginO2oOrder = prioOrders.get(0);
 			beginO2oOrder.Arrival_time = startTime + disparity;// 将第一个节点的时间往后移一下
 			o2oOrders.addAll(0, prioOrders);
@@ -236,6 +228,11 @@ public class DynamicVehicle {
 		}
 	}
 
+	/**
+	 * 将已经挑选出来的静态调度删除
+	 * @param depotOrders
+	 * @param prioOrders
+	 */
 	private void removeDepotOrders(List<Order> depotOrders,
 			List<ResultOrder> prioOrders) {
 		for (int i = 0; i < prioOrders.size(); i++) {
@@ -248,25 +245,22 @@ public class DynamicVehicle {
 	}
 
 	/**
-	 * 
-	 * 
+	 * 将订单使用遗传算法
 	 * @param orders
 	 * @param startTime
 	 * @return
 	 */
 	private List<ResultOrder> evaluate(List<Order> orders) {
-		List<ResultOrder> resultOrders;// = new ArrayList<>();
-		// if (orders.size() == 0)
-		// return resultOrders;
+		List<ResultOrder> resultOrders;
 		Vehicle vehicle = new Vehicle("", 200);//可以运200订单
-		vehicle.addOrder(orders, new ArrayList<Order>());
-		vehicle.run();
-		resultOrders = vehicle.getServicedLists();
+		vehicle.addOrder(orders, new ArrayList<Order>());//将订单添加到货车
+		vehicle.run();//货车进行遗传算法
+		resultOrders = vehicle.getServicedLists();//获取使用遗传算法后的调度
 		return resultOrders;
 	}
 
 	/**
-	 * 获取离第一个 o2o 订单最近的不超过140重量的点
+	 * 获取离第一个 o2o 订单最近的不超过140重量的静态订单集
 	 * 
 	 * @param deOrders
 	 *            仓库的订单
@@ -580,30 +574,6 @@ public class DynamicVehicle {
 			List<ResultOrder> resultOrders, int weight) {
 		List<String> orderIds = new ArrayList<>();
 		String string = null;
-		// if (resultOrders.size() == 0) {// 还没有元素加进来
-		// for (Order order : list) {// 存在即可
-		// List<SortNode> sortNodes = ServiceData.sortLibMap
-		// .get(order.dest_id);
-		// for (SortNode sortNode : sortNodes) {
-		// if (sortNode.staticOderNameList.size() > 0) {
-		// orderIds.clear();
-		// for (String orderId : sortNode.staticOderNameList) {
-		// int index = containOrder(list, orderId);
-		// if (index != -1) {// 已经不存在于队列中，故要移除
-		// string = order.dest_id;
-		// break;
-		// } else {
-		// orderIds.add(orderId);
-		// }
-		// }
-		// sortNode.staticOderNameList.removeAll(orderIds);
-		// if (string != null) {
-		// return string;
-		// }
-		// }
-		// }
-		// }
-		// }
 
 		int minDist = Integer.MAX_VALUE;
 		for (ResultOrder resultOrder : resultOrders) {

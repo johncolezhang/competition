@@ -27,7 +27,7 @@ public class Route {
 	}
 
 	/**
-	 * 通过订单，获取目的地点
+	 * 订单生成调度订单
 	 */
 	public void addResultOrders(List<Order> lists2) {
 		Collections.shuffle(lists2);// 打乱顺序，创建不同的路径
@@ -42,15 +42,6 @@ public class Route {
 		return depotOrder;
 	}
 
-	/*
-	 * public void addO2oResultOrder(List<Order> o2oList) { for (Order order :
-	 * o2oList) { ResultOrder resultOrder = createResultOrder(order, true); int
-	 * randIndex = (int) (Math.random() * lists.size()); lists.add(randIndex,
-	 * resultOrder);
-	 * 
-	 * resultOrder = createResultOrder(order, false); randIndex = (int)
-	 * (Math.random() * lists.size()); lists.add(randIndex, resultOrder); } }
-	 */
 	private ResultOrder createResultOrder(Order order, boolean isSrc) {
 		ResultOrder resultOrder = new ResultOrder();
 		resultOrder.Courier_id = Courier_id;

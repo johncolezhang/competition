@@ -13,7 +13,13 @@ import com.szu.model.ServiceData;
 import com.szu.util.Chromosome;
 import com.szu.util.LocalSearch;
 import com.szu.util.Rule;
-
+/**
+ * 传入一组routes，然后使用遗传算法完成配送
+ * @author johncole
+ * @ClassName Vehicle
+ * @date 2017年1月16日
+ *
+ */
 public class Vehicle {
 	private List<ResultOrder> servicedLists;//结果订单列表，以完成服务的订单
 	private List<Route> routes;
@@ -29,7 +35,7 @@ public class Vehicle {
 	 */
 	private List<ResultOrder> depots;//仓库订单
 	String Courier_id;//快递员id
-	private int popSize;//迭代次数
+	private int popSize;//订单数量
 
 	public Vehicle(String courier_id, int popSize) {
 		this.servicedLists = new ArrayList<>();
@@ -93,11 +99,16 @@ public class Vehicle {
 		weight = 0;// 车容量清0，一次任务完成
 	}
 
+	/**
+	 * 插入o2o列表
+	 * @param curServiceLists 当前调度
+	 * @param o2oOrders
+	 */
 	private void insertO2OOrder(List<ResultOrder> curServiceLists,
 			List<Order> o2oOrders) {
 		List<Order> orders = new ArrayList<>();
-		int pickupTime = this.time - DELAY_TIME;
-		int deliveryTime = curServiceLists.get(curServiceLists.size() - 1).Departure;
+		int pickupTime = this.time - DELAY_TIME;//
+		int deliveryTime = curServiceLists.get(curServiceLists.size() - 1).Departure;//出发时间
 		ResultOrder insertResultOrder;
 		for (Order order : o2oOrders) {
 			insertResultOrder = createResultOrder(order, true);
@@ -116,16 +127,10 @@ public class Vehicle {
 			index++;// 多了 一个元素，保证在该元素右边，故移动一位
 			index = insertO2OOrderIndex(curServiceLists, insertResultOrder,
 					index, false);
-			curServiceLists.add(index, insertResultOrder);
+			curServiceLists.add(index, insertResultOrder);//加入
 			Rule.calFitting(curServiceLists, depots.get(0), this.time);
 			orders.add(order);
-			// 服务时间太长，跳出服务
-			// if (curServiceLists.get(curServiceLists.size() - 1).Departure >
-			// Vehicle.FIN_SER)
-			// break;
 		}
-		// if (orders.size() > 0)
-		// System.out.println("remove:" + orders.size());
 		// 将处理过的 O2O 点移除
 		o2oOrders.removeAll(orders);
 		if (o2oOrders.size() > orders.size()) {
@@ -137,7 +142,7 @@ public class Vehicle {
 	}
 
 	/**
-	 * 获取插入点的位置
+	 * 获取插入点的最佳位置
 	 * 
 	 * @param curServiceLists
 	 * @param insertResultOrder
@@ -160,13 +165,15 @@ public class Vehicle {
 				minTime = tmp;
 			}
 		}
-		// if (isSrc && minTime > Vehicle.DELAY_TIME) {
-		// // System.out.println("花时间太多，距离过远:" + minTime);
-		// return -1;
-		// }
 		return index;
 	}
-
+/**
+ * 计算加入调度后的总时间
+ * @param list
+ * @param insertOrder
+ * @param index
+ * @return
+ */
 	private int additionTime(List<ResultOrder> list, ResultOrder insertOrder,
 			int index) {
 		list.add(index, insertOrder);
@@ -201,7 +208,12 @@ public class Vehicle {
 		addTime += (tailOrder.Departure - prioOrder.Departure);
 		return addTime;
 	}
-
+/**
+ * 生成调度
+ * @param order
+ * @param isSrc
+ * @return
+ */
 	private ResultOrder createResultOrder(Order order, boolean isSrc) {
 		ResultOrder resultOrder = new ResultOrder();
 		resultOrder.Courier_id = Courier_id;
@@ -266,7 +278,7 @@ public class Vehicle {
 	}
 
 	/**
-	 * 添加仓库货物
+	 * 添加仓库货物到depots中
 	 * 
 	 * @param lists
 	 */
@@ -283,13 +295,17 @@ public class Vehicle {
 			this.weight += order.num;
 		}
 		this.o2oOrders = o2oOrders;
-		initRoute(lists, o2oOrders);
+		initRoute(lists, o2oOrders);//初始化路径
 	}
-
+/**
+ * 初始化路径，将调度列表插入route中，然后生成总routes
+ * @param lists
+ * @param o2oList
+ */
 	private void initRoute(List<Order> lists, List<Order> o2oList) {
 		routes.clear();
 		// 初始化路径
-		for (int i = 0; i < popSize; i++) {
+		for (int i = 0; i < popSize; i++) {//遍历每个订单
 			Route route = new Route(Courier_id);
 			route.addResultOrders(lists);
 			// route.addO2oResultOrder(o2oList);

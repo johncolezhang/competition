@@ -14,19 +14,39 @@ import com.szu.model.ResultOrder;
 import com.szu.model.ServiceData;
 import com.szu.util.Rule;
 import com.szu.util.Utils;
-
+/**
+ * 动态结点的tsp算法，获得最佳的tsp
+ */
 public class DynamicBrandAndBoundForTSP {
+	/**
+	 * 结点数加2
+	 */
 	private int MAX_NUM;
 	private double[][] dist;
+	/**
+	 * 结点数
+	 */
 	private int n;
 	private static int INF = Integer.MAX_VALUE;
+	/**
+	 * o2o开始的索引
+	 */
 	private int o2oStartIndex;
 	private int depotWeight;
 	private int o2oWeight;
 	private int punish;
 	private int startTime;
+	/**
+	 * 记录整个静态和动态的链
+	 */
 	private List<ResultOrder> list;
+	/**
+	 * o2o订单的一段
+	 */
 	private List<ResultOrder> o2oList;
+	/**
+	 * 静态订单集合（距离o2olist出发点最近的）
+	 */
 	private List<Order> depotList;
 	private int totalSize;
 	public static String error = "";
@@ -47,27 +67,19 @@ public class DynamicBrandAndBoundForTSP {
 		depotList = depotOrders;//静态订单集合
 		totalSize = o2oList.size();
 		totalSize += depotList.size() * 2;
-		list = getResultOrder(depotOrders, o2oResultOrders, resultOrder);//生成总调度
+		list = getResultOrder(depotOrders, o2oResultOrders, resultOrder);//生成总调度，静态前，o2o后
 		this.startTime = startTime;
 		n = list.size();
 		MAX_NUM = n + 2;//数组大小
 		dist = new double[MAX_NUM][MAX_NUM];
 		for (int i = 1; i <= n; i++) {
 			for (int j = 1; j <= n; j++) {
-				// 第一个o2o 点只能被非 o2o 点连接
+				// 第一个o2o 点只能与静态连接
 				if ((j == o2oStartIndex && i > o2oStartIndex + 1)) {
 					dist[i][j] = INF;
 					continue;
 				}
-				// 第二个 o2o 点只能被第一个连接
-				// if (j == o2oStartIndex + 1) {
-				// if (i == o2oStartIndex)
-				// dist[i][j] = 0;
-				// else
-				// dist[i][j] = INF;
-				// continue;
-				// }
-				if (i == j) {
+				if (i == j) {//同一点
 					dist[i][j] = INF;
 					continue;
 				}
@@ -87,30 +99,19 @@ public class DynamicBrandAndBoundForTSP {
 		}
 	}
 
+	/**
+	 *  根据最佳路径获取结果
+	 * @return
+	 */
 	public List<ResultOrder> getResultOrders() {
 		List<ResultOrder> resultOrders = new ArrayList<>();
-		City city = getBest();
+		City city = getBest();//最佳路径，记录在route中
 		if (city == null) {// 没有找到合适的
-			// if (startTime == 0) {
-			// for (ResultOrder resultOrder : list) {
-			// System.out.println(resultOrder.toString());
-			// }
-			// for (int i = 1; i <= n; i++) {
-			// for (int j = 1; j <= n; j++) {
-			// double a = dist[i][j];
-			// if (a > 720)
-			// System.out.printf("%1.0e	", a);
-			// else
-			// System.out.print(a + "	");
-			// }
-			// System.out.println();
-			// }
-			// }
 			if (!error.equals("exceedWeigth")) {
 				System.out.println(error + "  o2oStartIndex:" + o2oStartIndex
 						+ "  o2oNum" + o2oList.size() + "  depotNum:"
 						+ depotList.size());
-				System.out.println(this.city.toString());
+				System.out.println(this.city.toString());//结点错误
 			}
 			return resultOrders;
 		}
@@ -118,12 +119,12 @@ public class DynamicBrandAndBoundForTSP {
 			ResultOrder resultOrder = Utils.createResultOrder(order, true);
 			resultOrders.add(resultOrder);
 		}
-		for (int i : city.route) {
+		for (int i : city.route) {//遍历route
 			i--;// 将其移位，与 list 对应上去
 			if (i > 0) {// 排除第一个仓库点
-				if (i == o2oStartIndex - 1) {
-					if (punish > 0) {// 动态点只有两个
-						for (ResultOrder resultOrder2 : o2oList) {
+				if (i == o2oStartIndex - 1) {//o2o开始点
+					if (punish > 0) {// 没有超时
+						for (ResultOrder resultOrder2 : o2oList) {//o2o段加入resultorders
 							resultOrders.add(resultOrder2.clone());
 						}
 					} else {// 将 o2o 收件点加上去
@@ -135,7 +136,7 @@ public class DynamicBrandAndBoundForTSP {
 				} else if (i == o2oStartIndex) {// 第二个 o2o 点
 					continue;
 				} else {
-					resultOrders.add(list.get(i));
+					resultOrders.add(list.get(i));//加总调度
 				}
 			}
 		}
@@ -166,8 +167,7 @@ public class DynamicBrandAndBoundForTSP {
 	}
 
 	/**
-	 * 进行紧凑处理，将前面的点占据的时间空处来<BR>
-	 * kamyang Sep 6, 2016
+	 * 进行紧凑处理，将前面的点占据的时间空处来
 	 * 
 	 * @param resultOrders
 	 */
@@ -194,20 +194,20 @@ public class DynamicBrandAndBoundForTSP {
 		City bestCity = null;
 		Queue<City> queue = new LinkedList<>();
 		queue.add(startCity);
-		while (!queue.isEmpty()) {// 没有空
+		while (!queue.isEmpty()) {
 			City tempCity = queue.poll();// 将当前的队列放出来
 			if (tempCity.pos == n - 1) {// 最后一个节点
 				for (int i = 1; i <= n; i++) {
-					if (!tempCity.visited[i]) {// 将最后一个节点加到访问队列里
+					if (!tempCity.visited[i]) {// 没访问过，将最后一个节点加到访问队列里
 						tempCity.visited[i] = true;
 						tempCity.pos++;// 指向下一个
-						tempCity.route[tempCity.pos] = i;
-						tempCity.lb = getLb(tempCity);
+						tempCity.route[tempCity.pos] = i;//将tempcity的位置放入route中
+						tempCity.lb = getLb(tempCity);//计算lb值
 						break;
 					}
 				}
 				if (bestCity == null || bestCity.lb > tempCity.lb)
-					bestCity = tempCity;
+					bestCity = tempCity;//指向下一个城市
 			} else {
 				double minLb = Double.MAX_VALUE;
 				List<City> list = new LinkedList<>();
@@ -215,7 +215,7 @@ public class DynamicBrandAndBoundForTSP {
 					if (!tempCity.visited[i]) {// 没有访问过，要创建相应对象
 						City city = new City();
 						city.pos = tempCity.pos + 1;
-						city.route = Arrays.copyOf(tempCity.route, MAX_NUM);
+						city.route = Arrays.copyOf(tempCity.route, MAX_NUM);//将tempcity赋给city
 						city.visited = Arrays.copyOf(tempCity.visited, MAX_NUM);
 						city.visited[i] = true;
 						city.route[city.pos] = i;
@@ -233,24 +233,20 @@ public class DynamicBrandAndBoundForTSP {
 						// 出现违法现象，即在 o2o 商户点出现前出现了 o2o 派送点
 						this.city = city;
 						if (exceedWeigth(city) || isIllegal(city)
-								|| isPunish(city))
+								|| isPunish(city))//是否出现超重，超时，违规的情况
 							continue;
 
 						if (city.lb <= minLb || i == o2oStartIndex) {
 							list.add(city);
-							minLb = Math.min(city.lb, minLb);
+							minLb = Math.min(city.lb, minLb);//选最小的lb
 						}
 					}
 				}
 				for (City city : list) {
 					// 最小值的地方，或者该处为 o2o 首次出现的地方
-					// if (o2oList.size() == 2 && depotList.size() > 8) {
 					if (city.lb == minLb
 							|| city.route[city.pos] == o2oStartIndex)
-						queue.add(city);// 添加到队列里
-						// } else {
-						// queue.add(city);
-						// }
+						queue.add(city);// 添加到队列里，下轮处理
 				}
 			}
 		}
@@ -483,7 +479,7 @@ public class DynamicBrandAndBoundForTSP {
 		public double lb;
 		int pos;// 记录当前走的位置
 		int st = 1;// 第一个作为开始
-		boolean visited[];
+		boolean visited[];//是否
 		public int route[];
 		int o2oStartIndex = 0; // 记录 o2o 在该路径上的起始时间
 
@@ -539,7 +535,7 @@ public class DynamicBrandAndBoundForTSP {
 		}
 		resultOrder = o2oResultOrders.get(0).clone();
 		list.add(resultOrder);// o2o起始位置
-		o2oStartIndex = list.size(); // o2o 起始位置
+		o2oStartIndex = list.size(); // o2o 第一单位置
 		punish = Rule.calFitting(o2oResultOrders, resultOrder.clone(),
 				resultOrder.Arrival_time);//计算积分
 		punish -= (o2oResultOrders.get(o2osize - 1).Departure - resultOrder.Arrival_time);//最后的到达时间减去出发时间

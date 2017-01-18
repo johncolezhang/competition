@@ -17,7 +17,13 @@ import com.szu.util.Rule;
 
 public class MergeOrder {
 
+	/**
+	 *允许等待十分钟 
+	 */
 	private static int TIME_RANGE = 10;
+	/**
+	 * 90分钟的时间窗
+	 */
 	private static int O2O_DEPOT_TIME = 90;
 	private static int O2OSEP_TIME = 90;
 	private static int MAX_WEIGHT = 140;
@@ -48,36 +54,15 @@ public class MergeOrder {
 				Rule.calFitting(resultOrders, depOrder, 0);//修改结点时间
 				o2oLists.remove(0);
 			} else {
-				// if (depotLists.size() > 0) {
 				resultOrders.addAll(depotLists.get(0));//添加该仓库调度
 				depotLists.remove(0);//删
 				Rule.calFitting(resultOrders, depOrder, startTime);//修改结点时间
-			} // else {
-				// resultOrders.addAll(o2oLists.get(0));
-				// startTime = resultOrders.get(0).Arrival_time;
-				// o2oLists.remove(0);
-				// Rule.calFitting(resultOrders, depOrder, startTime);
-				// }
+			} 
 			while (true) {
 				List<ResultOrder> list;
-				// 优先合并o2o 的队列
-				// int index = mergeO2oLists(resultOrders, o2oLists);
-				// if (index != -1) {
-				// list = o2oLists.remove(index);
-				// resultOrders.addAll(list);
-				// Rule.calFitting(resultOrders, depOrder, startTime);
-				// } else {
-				// index = mergeDepotLists(resultOrders, depotLists);
-				// if (index != -1) {
-				// list = depotLists.remove(index);
-				// resultOrders.addAll(list);
-				// Rule.calFitting(resultOrders, depOrder, startTime);
-				// } else
-				// break;
-				// }
 				int index = mergeDepotLists(resultOrders, depotLists);
 				if (index != -1) {
-					list = depotLists.remove(index);//时间720的删除，该趟时间超过
+					list = depotLists.remove(index);//加入后总时间小于720
 					resultOrders.addAll(list);
 					Rule.calFitting(resultOrders, depOrder, startTime);//重新计算时间
 				} else {
@@ -89,7 +74,12 @@ public class MergeOrder {
 		return results;//返回所有躺的调度
 	}
 	
-	
+	/**
+	 * 返回加入静态段后总时间小于720的静态段的index
+	 * @param resultOrders
+	 * @param depotLists
+	 * @return
+	 */
 	private int mergeDepotLists(List<ResultOrder> resultOrders,
 			List<List<ResultOrder>> depotLists) {
 		ResultOrder beginOrder, tailOrder = resultOrders.get(resultOrders
@@ -209,8 +199,6 @@ public class MergeOrder {
 
 	/**
 	 * 
-	 * kamyang 2016年8月5日
-	 * 
 	 * @param depotId
 	 * @param o2oOrders
 	 * @param beginO2oOrder
@@ -322,48 +310,11 @@ public class MergeOrder {
 	 * @return
 	 */
 	private List<ResultOrder> evaluate(List<Order> orders) {
-		List<ResultOrder> resultOrders;// = new ArrayList<>();
-		// if (orders.size() == 0)
-		// return resultOrders;
-		// if (orders.size() <= 20) {
-		// resultOrders = new ArrayList<>();
-		// BrandAndBoundForTSP tsp = new BrandAndBoundForTSP();
-		// List<ResultOrder> resultOrders2 = new ArrayList<>();
-		// ResultOrder resultOrder = createResultOrder(orders.get(0), true);
-		// resultOrders2.add(resultOrder);
-		// for (Order order : orders) {
-		// resultOrder = createResultOrder(orders.get(0), false);
-		// resultOrders2.add(resultOrder);
-		// resultOrder = createResultOrder(orders.get(0), true);
-		// resultOrders.add(resultOrder);
-		// }
-		// tsp.init(resultOrders2, new Distance<ResultOrder>() {
-		// @Override
-		// public double dist(ResultOrder resultOrder,
-		// ResultOrder resultOrder2) {
-		// Node node = ServiceData.localPacageMaps
-		// .get(resultOrder.Addr);
-		// Node node2 = ServiceData.localPacageMaps
-		// .get(resultOrder2.Addr);
-		// // 形成环状
-		// int tmp = Rule.distanceTime(node, node2);
-		// return tmp;
-		// }
-		// });
-		// City city = tsp.getBest();
-		// for (int index : city.route) {
-		// index -= 1;
-		// if (index > 0) {
-		// resultOrders.add(resultOrders2.get(index));
-		// }
-		// }
-		// Rule.calFitting(resultOrders, resultOrders2.get(0), 0);
-		// } else {
+		List<ResultOrder> resultOrders;
 		Vehicle vehicle = new Vehicle("", 100);
 		vehicle.addOrder(orders, new ArrayList<Order>());
 		vehicle.run();
 		resultOrders = vehicle.getServicedLists();
-		// }
 		return resultOrders;
 	}
 
@@ -451,6 +402,7 @@ public class MergeOrder {
 				int index = minO2oOrderIndex(list,
 						pickupResultOrders.get(pickupResultOrders.size() - 1),//刚刚加入的取货调度，订单列表中的第一单
 						weight);
+				//找最短时间o2o
 				if (index == -1)// 没有可以加入的节点了（因为要按照时间排序过来）
 					break;
 				order = list.get(index);

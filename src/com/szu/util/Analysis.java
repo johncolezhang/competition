@@ -17,7 +17,10 @@ public class Analysis {
 	 * 282193 280451 283596 124875 minPickup:210 maxPickup:629 minDelivery:300
 	 * maxDelivery:719 125853 62848
 	 */
-
+/**
+ * 分支界限法
+ * @param args
+ */
 	public static void main(String[] args) {
 		ServiceData.loadData();
 		DynamicVehicle dynamicVehicle = new DynamicVehicle();
@@ -45,10 +48,10 @@ public class Analysis {
 			List<Order> o2oList = new ArrayList<>();
 			o2oList.addAll(ServiceData.o2oOrderMaps.get(key));//距离该仓库最近的o2o订单
 			List<List<ResultOrder>> o2oLists = dynamicVehicle
-					.dealingO2oOrder(o2oList);//该仓库的o2o段集合
+					.dealingO2oOrder(o2oList);//生成段，该仓库的o2o段集合
 			List<List<ResultOrder>> mergeO2oLists = MergeOrderUtils
-					.mergeO2oOrderWithDepotOrders(o2oLists, key);
-			o2oResultMap.put(key, mergeO2oLists);
+					.mergeO2oOrderWithDepotOrders(o2oLists, key);//o2o与静态订单合并，用到分支界限
+			o2oResultMap.put(key, mergeO2oLists);//每个静态点的o2o段集合
 			totalRemain += entry.getValue().size();
 		}
 		System.out.println(totalSize + "  " + totalRemain);
@@ -62,9 +65,9 @@ public class Analysis {
 			totalSize += entry.getValue().size();
 			i++;
 			List<List<ResultOrder>> mergeO2oLists = o2oResultMap.get(key);
-			Map<String, List<SortNode>> sortLib = ServiceData.sortLibMap;
+			Map<String, List<SortNode>> sortLib = ServiceData.sortLibMap;//获取排序表
 			List<List<ResultOrder>> o2oLists = MergeOrderUtils.mergeO2oOrder(
-					sortLib, mergeO2oLists, key);
+					sortLib, mergeO2oLists, key);//插一些静态到o2o中
 			o2oPrioResultMap.put(key, o2oLists);
 			totalRemain += entry.getValue().size();
 		}
@@ -77,11 +80,11 @@ public class Analysis {
 			String key = entry.getKey();
 			totalSize += entry.getValue().size();
 			List<List<ResultOrder>> depotLists = dynamicVehicle.dealDepot(entry
-					.getValue());
+					.getValue());//处理静态订单
 			i++;
 			List<List<ResultOrder>> o2oLists = o2oPrioResultMap.get(key);
 			List<List<ResultOrder>> resultLists = dynamicVehicle
-					.mergeResultOrders(depotLists, o2oLists);
+					.mergeResultOrders(depotLists, o2oLists);//合并
 			results.addAll(resultLists);
 			totalRemain += entry.getValue().size();
 		}

@@ -3,7 +3,6 @@ package com.szu.model;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import com.szu.algorithm.Vehicle;
 import com.szu.util.Classify;
 
@@ -15,7 +14,10 @@ public class Schedule {
 	private final static int POP_SIZE = 100;
 	private final static int STEP = 15;
 	private final static int STOP_TIME = 620;
-
+	
+/**
+ * 遗传算法
+ */
 	 public void run() {
 		ServiceData.loadData();
 		int i = 0;
@@ -86,6 +88,7 @@ public class Schedule {
 		System.out.println(totalDepot + " " + totalO2o);
 		System.out.println(useDepot + " " + useO2o + "  " + o2oclass + " "
 				+ dui);
+		System.out.println("fitting" + fitting);
 	}
 	
 	/*

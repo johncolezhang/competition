@@ -12,6 +12,7 @@ import com.szu.algorithm.DynamicVehicle;
 import com.szu.algorithm.MergeOrder;
 import com.szu.model.Order;
 import com.szu.model.ResultOrder;
+import com.szu.model.Schedule;
 import com.szu.model.ServiceData;
 import com.szu.model.SortNode;
 import com.szu.util.CSVFileUtil;
@@ -24,18 +25,23 @@ public class Main {
 		// 750601 632808 563916 934
 		// 711312 562327
 		// 148985
-		 test();
+		//test();
 		// ServiceData.loadData();
 		// Node node = ServiceData.localPacageMaps.get("S103");
 		// Node node2 = ServiceData.localPacageMaps.get("B6540");
 		// System.out.println(Rule.distanceTime(node, node2));
-		double a = Integer.MAX_VALUE;
-		System.out.printf("%1.0e", a);
+		//double a = Integer.MAX_VALUE;
+		//System.out.printf("%1.0e", a);
 		// 为最小堆
-		 //finalTest();
+		//finalTest();
 		// System.out.println(632808 - 563916);
+		Schedule s = new Schedule();
+		s.run();
 	}
 
+	/**
+	 * 时间排序算法
+	 */
 	public static void finalTest() {
 		ServiceData.loadData();
 		int total = 0;
@@ -99,7 +105,9 @@ public class Main {
 			System.out.println();
 		}
 	}
-
+/**
+ * 时间排序的算法
+ */
 	public static void test() {
 		ServiceData.loadData();//加载文件，建立缓存在servicedata中
 		int total = 0;

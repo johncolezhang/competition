@@ -36,8 +36,7 @@ public class CreateSortLib {
 	}
 
 	/**
-	 * 根据订单地点来创建排序库<br>
-	 * kamyang Sep 1, 2016
+	 * 根据订单地点来创建排序库
 	 * 
 	 * @param orders
 	 * @return
@@ -69,7 +68,7 @@ public class CreateSortLib {
 	}
 
 	/**
-	 * 在这里获取排序库里面的序列，并且将传进去的那个 order 也包含进去<Br>
+	 * 在这里获取排序库里面的序列，并且将传进去的那个 order 也包含进去
 	 * 
 	 * @param sortLib 最近20点排序映射
 	 * @param initOrders 静态订单列表

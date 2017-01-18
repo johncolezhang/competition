@@ -4,7 +4,14 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-//no need
+
+/**
+ * 用来测试静态tsp的
+ * @author johncole
+ * @ClassName Data
+ * @date 2017年1月6日
+ *
+ */
 public class Data implements Distance<Node> {
 	List<Node> data = new ArrayList<>();
 

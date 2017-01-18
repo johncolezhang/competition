@@ -15,7 +15,7 @@ import com.szu.model.ServiceData;
 
 public class Classify {
 	private static int RANGE = 30;
-	private static int step = 20; // 以15分钟为一个尺度，进行划分
+	private static int step = 20; // 以20分钟为一个尺度，进行划分
 
 	/**
 	 * 将o2o 的数据划分到仓库里，按照最近原则，起始点离该仓库最近，但没有考虑时间的问题
@@ -119,16 +119,20 @@ public class Classify {
 		return o2oToDepotclassMap;
 	}
 
-	/**
+	/**随机选取一单，并且将其他单按照距离排序好
+	 * 
+	 * 每个list重量不超过140
+	 * 
 	 * 将仓库点进行划分成小于140的块
 	 * 
 	 * 该仓库结点的送达点之间距离的排序放在一个lists中返回
 	 * 
 	 * @param depotList
-	 *            仓库点
+	 *            该仓库所有订单
 	 * @param o2oclassToDepotMap
 	 *            动态的与仓库点的关系（还没有加入）
-	 * @return
+	 *            仓库的o2o映射
+	 * @return 返回排好序的lists
 	 */
 	public static List<List<Order>> classifyDepot(List<Order> depotList,
 			Map<String, List<Order>> o2oclassToDepotMap) {
@@ -136,7 +140,7 @@ public class Classify {
 		for (Order order : depotList) {
 			depotOrders.add(order);//加入所有订单
 		}
-		int randomIndex = (int) (Math.random() * depotOrders.size());
+		int randomIndex = (int) (Math.random() * depotOrders.size());//随机索引
 		List<List<Order>> lists = new ArrayList<>();
 		List<Order> list = new ArrayList<>();
 		int carry = 0;
@@ -223,7 +227,7 @@ public class Classify {
 		}
 	}
 	
-	/*
+	/**
 	 * 返回距离中心订单最近的订单
 	 */
 	private static Order min2CenterOrder(List<Order> depotOrders, Order center) {

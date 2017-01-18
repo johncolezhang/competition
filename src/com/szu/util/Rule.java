@@ -259,14 +259,13 @@ public class Rule {
 	}
 
 	/**
-	 * 获取下一个点的起始时间<Br>
-	 * kamyang Sep 3, 2016
+	 * 
 	 * 
 	 * @param startEndOrder
 	 *            当前节点
 	 * @param newStartOrder
 	 *            要获取的节点的起始时间
-	 * @return 返回下一个节点的开始时间
+	 * @return 返回下一个节点的最优开始时间
 	 */
 	public static int getNextNodeTime(ResultOrder startEndOrder,
 			ResultOrder newStartOrder) {

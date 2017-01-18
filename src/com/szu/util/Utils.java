@@ -17,7 +17,7 @@ public class Utils {
 	public static int totalIllegal = 0;
 
 	/**
-	 * 
+	 * o2o订单的tsp
 	 * @param depotOrders 静态订单集合（距离o2oResultOrders出发点最近的）
 	 * @param o2oResultOrders o2o订单的一段
 	 * @param startTime 开始时间
@@ -31,7 +31,7 @@ public class Utils {
 		DynamicBrandAndBoundForTSP brandAndBoundForTSP = new DynamicBrandAndBoundForTSP();
 		brandAndBoundForTSP.init(depotOrders, o2oResultOrders, depotOrder,
 				startTime);//生成点到点之间的距离
-		List<ResultOrder> resultOrders = brandAndBoundForTSP.getResultOrders();
+		List<ResultOrder> resultOrders = brandAndBoundForTSP.getResultOrders();//使用tsp
 		if (resultOrders.size() == 0) {
 			if (DynamicBrandAndBoundForTSP.error.equals("exceedWeigth")) {
 				Order order1 = depotOrders.remove(depotOrders.size() - 1);
@@ -99,10 +99,10 @@ public class Utils {
 	}
 
 	/**
-	 * 通过订单使用分支界限的方法进行求解最优派件路径<br>
-	 * 得到的路径为一个派件员要派件的一小段路径，将这些小片段组合起来，则形成一个派件员日常派件<br>
-	 * 获取的小片段起始时间都是为0,后面可以根据需要进行时间平移<BR>
-	 * kamyang Sep 2, 2016
+	 * 静态订单的tsp
+	 * 通过订单,使用分支界限的方法进行求解最优派件路径
+	 * 得到的路径为一个派件员要派件的一小段路径，将这些小片段组合起来，则形成一个派件员日常派件
+	 * 获取的小片段起始时间都是为0,后面可以根据需要进行时间平移
 	 * 
 	 * @param orders
 	 * @return
@@ -115,7 +115,7 @@ public class Utils {
 			return resultOrders;
 		ResultOrder resultOrder = createResultOrder(orders.get(0), true);//源地点
 		list.add(resultOrder);
-		for (Order order : orders) {
+		for (Order order : orders) {//一个送，一个收
 			resultOrder = createResultOrder(order, false);//目的地
 			list.add(resultOrder);
 			resultOrder = createResultOrder(order, true);//源地点
@@ -129,11 +129,12 @@ public class Utils {
 				// 形成环状
 				int tmp = Rule.distanceTime(node, node2);
 				return tmp;
-			}
+			}//获取各点间距离，再赋给BBFT中的dist二维数组
 		});
-		City city = tsp.getBest();
+		
+		City city = tsp.getBest();//获取最优的分支界限排序，最优点开始的一条路径
 		for (int index : city.route) {
-			index -= 1;
+			index -= 1;//route第一点不算
 			if (index > 0) {
 				resultOrders.add(list.get(index));
 			}
@@ -142,84 +143,13 @@ public class Utils {
 		return resultOrders;
 	}
 
-	// public static List<ResultOrder> tsp(List<Order> depotOrders,
-	// List<ResultOrder> o2oResultOrders, int startTime) {
-	// // if (o2oResultOrders.get(0).Order_id.equals("E3859")) {
-	// // System.out.println(depotOrders.size());
-	// // for (Order order : depotOrders) {
-	// // System.out.println(order.toString());
-	// // }
-	// // }
-	// ResultOrder o2oOrder = o2oResultOrders.get(0).clone();
-	// int punish = Rule.calFitting(o2oResultOrders, o2oOrder,
-	// o2oOrder.Arrival_time);
-	// o2oOrder = o2oResultOrders.get(0).clone();
-	// punish -= (o2oResultOrders.get(o2oResultOrders.size() - 1).Departure -
-	// o2oResultOrders
-	// .get(0).Arrival_time);
-	// ResultOrder depotOrder = createResultOrder(depotOrders.get(0), true);
-	// DynamicBrandAndBoundForTSP brandAndBoundForTSP = new
-	// DynamicBrandAndBoundForTSP();
-	// brandAndBoundForTSP.init(depotOrders, o2oResultOrders, depotOrder,
-	// startTime);
-	// List<ResultOrder> resultOrders = brandAndBoundForTSP.getResultOrders();
-	// if (resultOrders.size() == 0) {// 没有找到合适的
-	// System.out.println("没有找到合适的：" + startTime);
-	// // for (Order order : depotOrders) {
-	// // System.out.println(order.toString());
-	// // }
-	// // for (ResultOrder resultOrder : o2oResultOrders) {
-	// // System.out.println(resultOrder.toString());
-	// // }
-	// // System.out.println();
-	// return resultOrders;
-	// // return new ArrayList<>();
-	// }
-	// ResultOrder endOrder = (ResultOrder) MergeOrderUtils
-	// .getLast(resultOrders);
-	// while (endOrder.Arrival_time > 720) {// 超时了
-	// int index = CreateSortLib.containOrder(depotOrders,
-	// endOrder.Order_id);
-	// if (index == -1) {// 只剩下o2o 了
-	// break;
-	// }
-	// Order order = depotOrders.remove(index);
-	// MergeOrderUtils.returnDepot(order);
-	// brandAndBoundForTSP.init(depotOrders, o2oResultOrders, depotOrder,
-	// startTime);
-	// resultOrders = brandAndBoundForTSP.getResultOrders();
-	// endOrder = (ResultOrder) MergeOrderUtils.getLast(resultOrders);
-	// }
-	// System.out.println("使用了分支界限法");
-	// int spendTime = Rule.calFitting(resultOrders, depotOrder, startTime);
-	// spendTime -= (resultOrders.get(resultOrders.size() - 1).Departure -
-	// resultOrders
-	// .get(0).Arrival_time);
-	// if (spendTime != punish) {
-	// Node node = ServiceData.localPacageMaps.get(depotOrder.Addr);
-	// Node node2 = ServiceData.localPacageMaps.get(o2oResultOrders
-	// .get(o2oResultOrders.size() - 1).Addr);
-	// int dist = Rule.distanceTime(node, node2);
-	// System.out.println("分支界限法增加了处罚：" + (spendTime - punish) + "  "
-	// + punish + "  " + startTime + "  " + dist);
-	// // System.out.println(o2oOrder.toString());
-	// // System.out.println(o2oResultOrders.get(0).toString());
-	// // System.out.println();
-	// // for (ResultOrder resultOrder : resultOrders) {
-	// // System.out.println(resultOrder.toString());
-	// // }
-	// }
-	// return resultOrders;
-	// }
-
 	/**
-	 * 通过订单创建结果对象<br>
-	 * kamyang Sep 2, 2016
+	 * 通过订单创建结果对象
 	 * 
 	 * @param order
 	 *            要创建结果对象的订单对象
 	 * @param isSrc
-	 *            进行判断是创建源地点，还是目的地的。<br>
+	 *            进行判断是创建源地点，还是目的地的。
 	 *            如果是源地点，则为 true，如果为目的地点，则为 false
 	 * @return 返回创建好的结果对象，对象不包括派件员
 	 */
