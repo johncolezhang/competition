@@ -79,19 +79,6 @@ public class Utils {
 			resultOrders.remove(endOrder);
 			endOrder = (ResultOrder) MergeOrderUtils.getLast(resultOrders);
 		}
-		// while (endOrder.Arrival_time > 720) {// 超时了
-		// int index = CreateSortLib.containOrder(depotOrders,
-		// endOrder.Order_id);
-		// if (index == -1) {// 只剩下o2o 了
-		// break;
-		// }
-		// Order order = depotOrders.remove(index);
-		// MergeOrderUtils.returnDepot(order);
-		// brandAndBoundForTSP.init(depotOrders, o2oResultOrders, depotOrder,
-		// startTime);
-		// resultOrders = brandAndBoundForTSP.getResultOrders();
-		// endOrder = (ResultOrder) MergeOrderUtils.getLast(resultOrders);
-		// }
 		if (depotOrders.size() * 2 + o2oResultOrders.size() != resultOrders
 				.size())
 			System.out.println("订单不对");

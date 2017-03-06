@@ -80,16 +80,14 @@ public class Vehicle {
 				route3.setFitting(fitting);
 			}
 			selectRoute();//选择routes中最适合的路径
-			
-			//优化分支界限的算法可以写在这里
 		
 		}
 		// 增加 o2o 订单
 		List<ResultOrder> curServiceLists = new ArrayList<>();
-		curServiceLists.addAll(depots);
+		//curServiceLists.addAll(depots);
 		curServiceLists.addAll(routes.get(0).getLists());
 		Rule.calFitting(curServiceLists, routes.get(0).getDepotOrder(), time);
-		insertO2OOrder(curServiceLists, this.o2oOrders);
+		//insertO2OOrder(curServiceLists, this.o2oOrders);
 		// 一次结束后，将其加入到服务队列，由于进行了选择，故，最好的为第一条路
 		servicedLists.addAll(curServiceLists);
 		fitting = Rule.calFitting(servicedLists, routes.get(0).getDepotOrder(),
@@ -265,7 +263,7 @@ public class Vehicle {
 					return -1;
 				if (d1 > d2)
 					return 1;
-				return 0;// 降序排序
+				return 0;// 升序排序
 			}
 
 		});
@@ -305,15 +303,15 @@ public class Vehicle {
 	private void initRoute(List<Order> lists, List<Order> o2oList) {
 		routes.clear();
 		// 初始化路径
-		for (int i = 0; i < popSize; i++) {//遍历每个订单
+		for (int i = 0; i < popSize; i++) {
 			Route route = new Route(Courier_id);
-			route.addResultOrders(lists);
+			route.addResultOrders(lists);//在这里打乱每个list中订单的顺序
 			// route.addO2oResultOrder(o2oList);
 			int fitting = Rule.calFitting(route.getLists(),
 					route.getDepotOrder(), time);
 			route.setFitting(fitting);
 			routes.add(route);
-		}
+		}//把list复制popsize次插到routes中
 	}
 
 }

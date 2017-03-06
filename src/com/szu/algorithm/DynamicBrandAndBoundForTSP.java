@@ -255,7 +255,7 @@ public class DynamicBrandAndBoundForTSP {
 
 	/**
 	 * 处罚了，要进行处理，丢弃该路径<BR>
-	 * kamyang Sep 5, 2016
+	 * 
 	 * 
 	 * @param city
 	 * @return
@@ -323,7 +323,7 @@ public class DynamicBrandAndBoundForTSP {
 	}
 
 	/**
-	 * kamyang Sep 5, 2016
+	 * 
 	 * 
 	 * @param curTime
 	 * @param curNodeIndex
@@ -342,7 +342,7 @@ public class DynamicBrandAndBoundForTSP {
 
 	/**
 	 * 判断是否出现违规路径，即 o2o 派送点出现在收件前<BR>
-	 * kamyang Sep 5, 2016
+	 * 
 	 * 
 	 * @param city
 	 * @return
@@ -367,7 +367,6 @@ public class DynamicBrandAndBoundForTSP {
 
 	/**
 	 * 判断是否超重<BR>
-	 * kamyang Sep 5, 2016
 	 * 
 	 * @param route
 	 * @param o2oIndex
@@ -491,7 +490,7 @@ public class DynamicBrandAndBoundForTSP {
 
 	/**
 	 * 获取两订单的距离，这里的距离包括服务第一个订单的时间<Br>
-	 * kamyang Sep 5, 2016
+	 * 
 	 * 
 	 * @param resultOrder
 	 *            第一个订单
@@ -508,7 +507,7 @@ public class DynamicBrandAndBoundForTSP {
 	}
 
 	/**
-	 * kamyang Sep 4, 2016
+	 *
 	 * 
 	 * @param depotOrders 静态订单集合
 	 * @param o2oResultOrders o2o订单集合

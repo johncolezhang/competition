@@ -131,7 +131,7 @@ public class Chromosome {
 	}
 
 	/**
-	 * 将调度单中的一部分进行反转操作
+	 * 将routes进行反转操作
 	 * 
 	 * @param route
 	 */

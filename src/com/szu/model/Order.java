@@ -10,7 +10,7 @@ public class Order {
 	 */
 	public String dest_id;
 	/**
-	 * 源地点Id
+	 * 出发地点Id
 	 */
 	public String src_id;
 	/**

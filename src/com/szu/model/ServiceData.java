@@ -76,7 +76,7 @@ public class ServiceData {
 		CSVFileUtil.readId("res/new_2.csv", localPacageMaps);//配送点
 		CSVFileUtil.readId("res/new_3.csv", localPacageMaps);//商户点
 		CSVFileUtil.readOrder("res/new_4.csv", OrderPackageMaps);//电商订单
-		CSVFileUtil.readOrder("res/new_5.csv", OrderPackageMaps);//o20订单
+		CSVFileUtil.readOrder("res/new_5.csv", OrderPackageMaps);//o2o订单
 		CSVFileUtil.readDepot("res/new_4.csv", depotMaps);//出发点的所有订单
 		CSVFileUtil.readO2OOrder("res/new_5.csv", o2oOrders);//o2o订单
 		CSVFileUtil.readCourier("res/new_6.csv", courierLists);//快递员信息
